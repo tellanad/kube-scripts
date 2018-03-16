@@ -1,0 +1,32 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: logging
+  labels:
+    component: kibana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: kibana
+  template:
+    metadata:
+      labels:
+        component: kibana
+    spec:
+      containers:
+      - name: kibana
+        image: kibana:5.4.2
+        resources:
+          limits:
+            cpu: 200m
+          requests:
+            cpu: 200m
+        env:
+          - name: "SERVER_NAME"
+            value: "kibana.lab.int"
+        ports:
+        - containerPort: 5601
+          name: ui
+          protocol: TCP

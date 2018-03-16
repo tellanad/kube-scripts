@@ -1,0 +1,24 @@
+apiVersion: v1
+data:
+  config.json: |
+    {
+        "auths": {
+       	        "docker.devopsit.com.ua": {
+               	        "auth": "cm9vdDprbGljaGtvbWVy"
+                },
+       	        "nexus.lab.int": {
+                        "auth": "YWRtaW46YWRtaW4xMjM="
+       	        },
+               	"registry.lab.int": {
+                        "auth": "ZG9ja2VyOnBva2Vy"
+       	        },
+                "vpn.devopsit.com.ua": {
+       	                "auth": "cm9vdDprbGljaGtvbWVy"
+                }
+        }
+    } 
+kind: ConfigMap
+metadata:
+  name: jenkins-docker-registry
+  namespace: jenkins
+

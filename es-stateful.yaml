@@ -1,0 +1,78 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: elasticsearch
+  namespace: logging
+  labels:
+    component: elasticsearch
+spec:
+  serviceName: elasticsearch-data
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        component: elasticsearch
+      annotations:
+        pod.beta.kubernetes.io/init-containers: '[
+          {
+          "name": "sysctl",
+            "image": "busybox",
+            "imagePullPolicy": "IfNotPresent",
+            "command": ["sysctl", "-w", "vm.max_map_count=262144"],
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ]'
+    spec:
+      containers:
+      - name: es-data
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+              - IPC_LOCK
+        image: quay.io/pires/docker-elasticsearch-kubernetes:5.4.0
+        imagePullPolicy: Always
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: "CLUSTER_NAME"
+          value: "logstash"
+        - name: NODE_MASTER
+          value: "true"
+        - name: NODE_INGEST
+          value: "true"
+        - name: HTTP_ENABLE
+          value: "true"
+        - name: "ES_JAVA_OPTS"
+          value: "-Xms256m -Xmx256m"
+        - name: "NETWORK_HOST"
+          value: "0.0.0.0"
+        - name: "HTTP_CORS_ALLOW_ORIGIN"
+          value: "/.*/"
+        - name: "ES_PLUGINS_INSTALL"
+          value: "https://distfiles.compuscene.net/elasticsearch/elasticsearch-prometheus-exporter-5.4.0.0.zip"
+        ports:
+        - containerPort: 9300
+          name: transport
+          protocol: TCP
+        volumeMounts:
+        - name: storage
+          mountPath: /data
+  volumeClaimTemplates:
+  - metadata:
+      name: storage
+      annotations:
+        volume.beta.kubernetes.io/storage-class: anything
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi

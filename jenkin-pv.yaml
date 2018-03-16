@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-jenkins-data
+  namespace: jenkins
+spec:
+  persistentVolumeReclaimPolicy: Delete
+  claimRef:
+    kind: PersistentVolumeClaim
+    name: jenkins-data
+    namespace: jenkins
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  nfs:
+    # FIXME: use the right IP
+    server: 10.0.0.1
+    path: "/mnt/jenkins-home"

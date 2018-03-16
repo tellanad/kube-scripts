@@ -1,0 +1,72 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: jenkins
+  namespace: jenkins
+spec:
+  strategy:
+    type: Recreate
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: jenkins
+      annotations:
+        pod.alpha.kubernetes.io/init-containers: '[
+              {
+                  "name": "copy-default-config",
+                  "image": "jenkins:2.46.2-alpine",
+                  "imagePullPolicy": "IfNotPresent",
+                  "command": [ "sh", "/var/jenkins_config/apply_config.sh" ],
+                  "volumeMounts": [
+                      {
+                          "name": "jenkins-config",
+                          "mountPath": "/var/jenkins_config"
+                      },
+                      {
+                          "name": "jenkinshome",
+                          "mountPath": "/var/jenkins_home"
+                      }
+                  ]
+              }
+          ]'
+    spec:
+      securityContext:
+        runAsUser: 0
+        fsGroup: 1000
+      containers:
+      - image: jenkins:2.46.3-alpine
+        imagePullPolicy: IfNotPresent
+        name: jenkins
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+          name: web
+        - containerPort: 50000
+          protocol: TCP
+          name: slaves
+        readinessProbe:
+          httpGet:
+            path: /login
+            port: 8080
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 2
+          failureThreshold: 5
+        resources:
+          requests:
+            cpu: 500m
+            memory: 500Mi
+        volumeMounts:
+        - mountPath: /var/jenkins_home
+          name: jenkinshome
+        - mountPath: /var/jenkins_config
+          name: jenkins-config
+          readOnly: true
+      volumes:
+      - name: jenkinshome
+        persistentVolumeClaim:
+          claimName: jenkins-data
+      - name: jenkins-config
+        configMap:
+          name: jenkins

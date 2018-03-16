@@ -1,0 +1,15 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: jenkins
+  namespace: jenkins
+spec:
+  rules:
+  - host: jenkins.lab.int
+    http:
+      paths:
+      - backend:
+          serviceName: jenkins-ui
+          servicePort: 8080
+        path: /
